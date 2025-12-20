@@ -1,0 +1,9 @@
+nudenet>=3.4.2
+customtkinter
+pillow
+onnxruntime-gpu==1.18.1
+colorama
+tqdm
+pandas
+GPUtil
+psutil
