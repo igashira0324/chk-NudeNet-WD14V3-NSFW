@@ -131,3 +131,7 @@ STYLE_COLORS = {
     '水着': '#f1c40f',    # Yellow
     'その他': '#2ecc71'   # Green
 }
+
+# WD14 Tags for Anime/Real Classification override
+ANIME_TAGS = {'anime', 'comic', 'manga', 'illustration', 'painting', 'sketch', 'drawing', '2d'}
+REAL_TAGS = {'photorealistic', 'realistic', 'photo', 'real life', '3d'}

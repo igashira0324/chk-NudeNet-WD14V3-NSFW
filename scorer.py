@@ -57,17 +57,75 @@ class Scorer:
 
         f_face = label_max_scores.get('FACE_FEMALE', 0.0)
         m_face = label_max_scores.get('FACE_MALE', 0.0)
-        style_label = "アニメ" if style['anime'] > style['real'] else "実写"
-        style_score = max(style['anime'], style['real'])
+        from config import ANIME_TAGS, REAL_TAGS
+        
+        # Style determination (Anime vs Real)
+        # Priority: WD14 Tags > NudeNet Style Score
+        clothing_tags = analysis_result.get('clothing_tags', {})
+        
+        max_anime_tag_score = 0.0
+        max_real_tag_score = 0.0
+        
+        for tag, score in clothing_tags.items():
+            if tag in ANIME_TAGS:
+                max_anime_tag_score = max(max_anime_tag_score, score)
+            elif tag in REAL_TAGS:
+                max_real_tag_score = max(max_real_tag_score, score)
+        
+        # Default to NudeNet if no tags strong enough, or use WD14 if strong
+        nn_anime = style['anime']
+        nn_real = style['real']
+        
+        # Decision Logic
+        if max_anime_tag_score > 0.4 or max_real_tag_score > 0.4:
+            # Use WD14
+            if max_anime_tag_score >= max_real_tag_score:
+                style_label = "アニメ"
+                style_score = max_anime_tag_score
+            else:
+                style_label = "実写"
+                style_score = max_real_tag_score
+        else:
+            # Fallback to NudeNet
+            style_label = "アニメ" if nn_anime > nn_real else "実写"
+            style_score = max(nn_anime, nn_real)
+
+        # Gender Logic: NudeNet Face vs WD14 Tags
+        gender_label = ""
+        gender_score = 0.0
+        
+        # NudeNet Face Detection
         if f_face >= m_face and f_face > 0:
-            face_info = f"女({f_face:.1f}),{style_label}({style_score:.1f})"
-            face_max = f_face
-        elif m_face > f_face:
-            face_info = f"男({m_face:.1f}),{style_label}({style_score:.1f})"
-            face_max = m_face
+            gender_label = "女"
+            gender_score = f_face
+        elif m_face > f_face and m_face > 0:
+            gender_label = "男"
+            gender_score = m_face
+        
+        # WD14 Fallback if NudeNet found nothing
+        if not gender_label:
+            # Check WD14 tags
+            female_tags = ['1girl', 'girl', 'woman', 'female', 'ladies']
+            male_tags = ['1boy', 'boy', 'man', 'male', 'guys']
+            
+            w_f_score = max([clothing_tags.get(t, 0.0) for t in female_tags]) if clothing_tags else 0.0
+            w_m_score = max([clothing_tags.get(t, 0.0) for t in male_tags]) if clothing_tags else 0.0
+            
+            if w_f_score > 0.4 or w_m_score > 0.4:
+                if w_f_score >= w_m_score:
+                    gender_label = "女"
+                    gender_score = w_f_score
+                else:
+                    gender_label = "男"
+                    gender_score = w_m_score
+
+        if gender_label:
+            face_info = f"{gender_label}({gender_score:.1f}),{style_label}({style_score:.1f})"
+            face_max = gender_score
         else:
             face_info = f"{style_label}({style_score:.1f})"
             face_max = style_score
+
         category_results['FACE'] = CategoryScore(max_score=face_max, display_score=face_max, label_info=face_info)
 
         # Verdict calculation

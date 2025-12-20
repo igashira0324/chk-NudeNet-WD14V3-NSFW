@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAS_MONITOR = False
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageOps
 from typing import List, Dict, Any, Optional
 
 from config import SUPPORTED_EXTENSIONS, VERDICT_ICONS, UI_THEME, UI_COLOR_THEME, CATEGORY_MAP, CATEGORY_SCORE_COLORS, STYLE_COLORS
@@ -89,6 +89,12 @@ class ReferenceWindow(ctk.CTkToplevel):
 3. 部位別解析:
    ・各部位の数値は 0.0〜1.0 (100%) の露出スコアを表します。
    ・「着衣(100%)」は、NSFWリスクが極めて低い状態を示します。
+
+ 【アニメ/実写判定】
+ ・WD14 V3タグ（anime, realistic等）の検出結果を優先し、NudeNetの判定を補正します。
+
+ 【性別判定 (WD14 V3)】
+ ・NudeNetで顔が検出されない場合、WD14モデルによるタグ（1girl/1boy等）を使用して性別を推定します。
         """
         ctk.CTkLabel(self.scroll_frame, text=info_text, justify="left", font=ctk.CTkFont(size=12), text_color="#bdc3c7").pack(pady=20, padx=20, anchor="w")
 
@@ -166,9 +172,12 @@ class NudeNetGUI:
 
         # --- Main Content ---
         self.main_content = ctk.CTkFrame(self.root, corner_radius=10)
-        self.main_content.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+        self.main_content.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
         self.main_content.grid_columnconfigure(0, weight=1)
-        self.main_content.grid_rowconfigure(2, weight=1)
+        self.main_content.grid_rowconfigure(0, weight=0) # Top Control
+        self.main_content.grid_rowconfigure(1, weight=0) # Progress
+        self.main_content.grid_rowconfigure(2, weight=1) # Table (Maximized)
+        self.main_content.grid_rowconfigure(3, weight=0) # Bottom Control
 
         # Control Buttons
         self.top_ctrl = ctk.CTkFrame(self.main_content, height=50, fg_color="transparent")
@@ -195,12 +204,6 @@ class NudeNetGUI:
         self.status_label = ctk.CTkLabel(self.status_box, text="ステータス: 待機中", font=ctk.CTkFont(weight="bold"), text_color="white")
         self.status_label.pack(side=tk.RIGHT, padx=10, pady=2)
 
-        # Buttons packed to the left of status (packed after status_box with side=tk.RIGHT)
-        self.export_btn = ctk.CTkButton(self.top_ctrl, text="結果をエクスポート", width=120, fg_color="#2c3e50", command=self._export_results)
-        self.export_btn.pack(side=tk.RIGHT, padx=5)
-
-        self.ref_btn = ctk.CTkButton(self.top_ctrl, text="カテゴリ基準", width=100, fg_color="#34495e", command=self._show_reference)
-        self.ref_btn.pack(side=tk.RIGHT, padx=5)
 
         if HAS_MONITOR:
             # Relocated Performance Monitor (Horizontal)
@@ -243,7 +246,8 @@ class NudeNetGUI:
 
         # Table
         self.table_frame = tk.Frame(self.main_content, bg="#2b2b2b")
-        self.table_frame.grid(row=2, column=0, sticky="nsew", padx=20, pady=(0, 20))
+        # Maximized Height: Reduce pady to allow list to stretch
+        self.table_frame.grid(row=2, column=0, sticky="nsew", padx=20, pady=(0, 2))
         
         try:
             style = ttk.Style()
@@ -285,6 +289,19 @@ class NudeNetGUI:
         h_scrollbar.grid(row=1, column=0, sticky="ew")
         
         self.table_frame.grid_columnconfigure(0, weight=1)
+        self.table_frame.grid_rowconfigure(0, weight=1)
+
+        # --- Bottom Control (Footer) ---
+        # Remove fixed height to allow auto-sizing and max list expansion
+        self.bottom_ctrl = ctk.CTkFrame(self.main_content, fg_color="transparent")
+        self.bottom_ctrl.grid(row=3, column=0, sticky="ew", padx=10, pady=(0, 5))
+
+        # Buttons in bottom-right
+        self.export_btn = ctk.CTkButton(self.bottom_ctrl, text="結果をエクスポート", width=120, fg_color="#2c3e50", command=self._export_results)
+        self.export_btn.pack(side=tk.RIGHT, padx=5)
+
+        self.ref_btn = ctk.CTkButton(self.bottom_ctrl, text="カテゴリ基準", width=100, fg_color="#34495e", command=self._show_reference)
+        self.ref_btn.pack(side=tk.RIGHT, padx=5)
 
         # Bindings
         self.tree.bind("<<TreeviewSelect>>", self._on_tree_select)
@@ -444,10 +461,12 @@ class NudeNetGUI:
         self.caption_box.configure(state="normal")
         self.caption_box.delete("1.0", tk.END)
         
-        summary_top = f"【判定スタイル】\n{style_text}\n"
-        if sex_style != "-":
-            summary_top += f"{sex_style}\n"
-        summary_top += "\n【詳細カテゴリ】\n"
+        
+        # summary_top = f"【判定スタイル】\n{style_text}\n"
+        # if sex_style != "-":
+        #    summary_top += f"{sex_style}\n"
+        # Removed as per user request, starting directly with Details
+        summary_top = "【詳細カテゴリ】\n"
         
         self.caption_box.insert("end", summary_top)
 
@@ -479,15 +498,18 @@ class NudeNetGUI:
             except: 
                 return None, None, text_line
 
-        details_lines = details_text.split(', ')
-        for line in details_lines:
-            if not line: continue
-            icon, color_tag, content = get_detail_data(line)
-            if icon:
-                self.caption_box.insert("end", icon, color_tag)
-                self.caption_box.insert("end", f"{content}\n")
-            else:
-                self.caption_box.insert("end", f"{line}\n")
+        details_lines = [line for line in details_text.split(', ') if line]
+        
+        if not details_lines or (len(details_lines) == 1 and details_lines[0] == "SAFE(0.0)"):
+             self.caption_box.insert("end", "特になし\n")
+        else:
+            for line in details_lines:
+                icon, color_tag, content = get_detail_data(line)
+                if icon:
+                    self.caption_box.insert("end", icon, color_tag)
+                    self.caption_box.insert("end", f"{content}\n")
+                else:
+                    self.caption_box.insert("end", f"{line}\n")
         
         all_tags_lines = all_tags_text.replace(', ', '\n')
         self.caption_box.insert("end", f"\n【認知したすべてのタグ】\n{all_tags_lines}")
@@ -507,22 +529,30 @@ class NudeNetGUI:
             
             # Use PIL to load and resize
             img = Image.open(path)
+            original_size = img.size
             
-            # Calculate aspect ratio for sidebar container
-            # The container is now 350px high
-            pw = 280
-            ph = 340
+            # Calculate aspect ratio manually to fit within sidebar container
+            # Container width is fixed at sidebar width minus padding
+            max_w = 280
+            max_h = 250 # Safe height to avoid clipping
             
-            img.thumbnail((pw, ph), Image.LANCZOS)
+            ratio_w = max_w / original_size[0]
+            ratio_h = max_h / original_size[1]
+            scale = min(ratio_w, ratio_h)
+            
+            new_w = int(original_size[0] * scale)
+            new_h = int(original_size[1] * scale)
+            
+            # Resize
+            img = img.resize((new_w, new_h), Image.LANCZOS)
             
             # Use the resized image's own size for the CTkImage
             ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(img.width, img.height))
             
             # File info
-            # File info
             file_size_mb = path.stat().st_size / (1024 * 1024)
-            # CTkImage handles resizing, but 'img' is the original 
-            info_text = f"プレビュー（{img.width}x{img.height}）：{file_size_mb:.1f}MB"
+            # Display ORIGINAL dimensions
+            info_text = f"プレビュー（{original_size[0]}x{original_size[1]}）：{file_size_mb:.1f}MB"
             
             self.preview_label.configure(text=info_text)
             self.preview_img_label.configure(image=ctk_img, text="")
