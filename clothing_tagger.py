@@ -16,8 +16,8 @@ from typing import Dict, List, Tuple, Any
 
 class ClothingTagger:
     def __init__(self, model_url: str, tags_url: str):
-        self.model_path = Path.home() / ".gemini" / "models" / "wd_vit_large_v3.onnx"
-        self.tags_path = Path.home() / ".gemini" / "models" / "wd_vit_large_v3_tags.csv"
+        self.model_path = Path.home() / ".gemini" / "models" / "wd_eva02_large_v3.onnx"
+        self.tags_path = Path.home() / ".gemini" / "models" / "wd_eva02_large_v3_tags.csv"
         self.model_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._ensure_model_exists(model_url, tags_url)
