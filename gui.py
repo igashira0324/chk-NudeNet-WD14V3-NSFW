@@ -79,7 +79,7 @@ class ReferenceWindow(ctk.CTkToplevel):
         info_text = """
 【判定ロジックの見直し (2025.12 改良版)】
 1. スタイル判定 (最優先):
-   ・WD14 V3 (ViT-Large) モデルにより、1万以上のタグから「水着」「制服」「下着」等を特定します。
+   ・Waifu Diffusion 14 V3 (WD14-Tagger V3, ViT-Large) モデルにより、1万以上のタグから「水着」「制服」「下着」等を特定します。
    ・数値(%)はAIの確信度を表します。
 
 2. NudeNetフォールバック (二次判定):
@@ -91,10 +91,19 @@ class ReferenceWindow(ctk.CTkToplevel):
    ・「着衣(100%)」は、NSFWリスクが極めて低い状態を示します。
 
  【アニメ/実写判定】
- ・WD14 V3タグ（anime, realistic等）の検出結果を優先し、NudeNetの判定を補正します。
+ ・Waifu Diffusion 14 V3 タグ（anime, realistic等）の検出結果を優先し、NudeNetの判定を補正します。
 
- 【性別判定 (WD14 V3)】
- ・NudeNetで顔が検出されない場合、WD14モデルによるタグ（1girl/1boy等）を使用して性別を推定します。
+ 【性別判定 (Waifu Diffusion 14 V3)】
+ ・NudeNetで顔が検出されない場合、Waifu Diffusion 14 V3 モデルによるタグ（1girl/1boy等）を使用して性別を推定します。
+
+ 【判定カテゴリ詳細】
+ - SAFE (0-20%): 露出がほとんどない、または通常の服装。NSFW部位の検出が低く、スタイルも着衣。
+ - LOW_RISK (20-40%): 水着や露出度の高い私服など。軽度の露出があるが、危険度は低い。
+ - MODERATE (40-60%): 下着姿、または際どい衣装。部分的な露出が検出される場合。
+ - HIGH_RISK (60-80%): 部分的な露出や、明示的な性的タグの検出。スタイルが下着や裸寄りの場合。
+ - UNSAFE (80-100%): 完全な裸体、乳首・性器の露出、または nipples (>=92%) / pussy (>=90%) タグの高確信度検出。
+
+ **注意**: 判定は最大スコアに基づきますが、スタイル（Waifu Diffusion 14 V3 タグ）によるオーバーライドが適用される場合があります。
         """
         ctk.CTkLabel(self.scroll_frame, text=info_text, justify="left", font=ctk.CTkFont(size=12), text_color="#bdc3c7").pack(pady=20, padx=20, anchor="w")
 

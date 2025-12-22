@@ -1,6 +1,6 @@
 # chk-NudeNet-WD14V3-NSFW (On-Premise NSFW Checker)
 
-`NudeNet` および `WD14 V3 (ViT-Large)` を活用した、**完全オンプレミス（ローカル完結）** の NSFW 画像チェックアプリケーションです。  
+`NudeNet` および `Waifu Diffusion 14 V3 (WD14-Tagger V3, ViT-Large)` を活用した、**完全オンプレミス（ローカル完結）** の NSFW 画像チェックアプリケーションです。  
 外部APIを使用せず、ローカルマシンのリソースのみで高速かつ安全に画像判定を行います。様々な服装やシチュエーション（和服、メイド、制服など）を高精度に識別します。
 
 ![GUI Preview](https://github.com/user-attachments/assets/placeholder) 
@@ -15,7 +15,7 @@
 ### 🧠 高度なマルチモデル判定 (Multi-Model Analysis)
 本アプリは3つの異なるAIモデルを統合して判定を行います。
 1. **NudeNet Detector**: 露出部位（胸、性器など）の物体検出。
-2. **WD14 V3 Tagger**: 10,000種類以上のタグ（服装、性別、シチュエーション）を高精度に分類。
+2. **Waifu Diffusion 14 V3 Tagger (WD14-Tagger V3)**: 10,000種類以上のタグ（服装、性別、シチュエーション）を高精度に分類。
 3. **Anime Classifier**: アニメ/実写の画風判定。
 
 ### 🖥️ 高機能 GUI
@@ -30,11 +30,11 @@
 ### ⚙️ 判定ロジックの詳細 (Advanced Logic)
 単純なスコア判定だけでなく、独自の後処理ロジックで誤判定を抑制しています。
 
-1.  **WD14タグ優先のスタイル判定**:
-    - **性別判定**: NudeNetで顔が検出されない場合、WD14のタグ（`1girl`, `1boy` 等）を使用して性別を推定。
+1.  **Waifu Diffusion 14 V3 タグ優先のスタイル判定**:
+    - **性別判定**: NudeNetで顔が検出されない場合、Waifu Diffusion 14 V3 のタグ（`1girl`, `1boy` 等）を使用して性別を推定。
     - **服装認識**: `kimono` (和服)、`maid` (メイド)、`school uniform` (制服) などを認識し、露出判定の文脈を補正。
 2.  **特異点オーバーライド**: `nipples` (乳首) が **93%** 以上で検出された場合、他の要素に関わらず `UNSAFE` (裸) と判定。
-3.  **アニメ/実写の自動識別**: WD14タグ (`anime`, `realistic`) と NudeNet のスコアを比較し、より確信度の高い方を採用。
+3.  **アニメ/実写の自動識別**: Waifu Diffusion 14 V3 タグ (`anime`, `realistic`) と NudeNet のスコアを比較し、より確信度の高い方を採用。
 
 ## 🛠️ アーキテクチャ (Architecture)
 
@@ -55,7 +55,7 @@ graph TD
     
     subgraph "Model Backend"
         Det["📦 NudeNet Detector"]
-        Tag["🏷️ WD14 V3 Tagger"]
+        Tag["🏷️ Waifu Diffusion 14 V3 Tagger"]
         Anime["🎨 Anime Classifier"]
     end
     
@@ -101,13 +101,13 @@ sequenceDiagram
         Client->>Models: 2. Anime/Real判定
         Models-->>Client: Style Scores
         
-        Client->>Models: 3. WD14タグ付け (服装/性別)
+        Client->>Models: 3. Waifu Diffusion 14 V3 タグ付け (服装/性別)
         Models-->>Client: Clothing Tags
         
         Client-->>Thread: 全解析データ
         
         Thread->>Scorer: score(解析データ)
-        Note over Scorer: 性別フォールバック<br/>タグ優先度適用<br/>リスク判定
+        Note over Scorer: 性別フォールバック<br/>Waifu Diffusion 14 V3 タグ優先度適用<br/>リスク判定
         Scorer-->>Thread: 判定結果 (Result)
         
         Thread-->>GUI: Queue.put(Result)
@@ -147,8 +147,8 @@ python main.py
 2. **「スキャンを開始」** ボタンを押します。
 3. 判定が完了すると、リストに以下の情報が表示されます：
    - **判定(スコア)**: 安全度（SAFE〜UNSAFE）。
-   - **スタイル**: 服装（裸、水着、下着、和服、メイドなど）。
-   - **性別**: 女/男/不明（WD14タグによる補正あり）。
+   - **スタイル**: 服装（裸、水着、下着、和服、メイドなど）。Waifu Diffusion 14 V3 タグによる分類。
+   - **性別**: 女/男/不明（Waifu Diffusion 14 V3 タグによる補正あり）。
    - **詳細ラベル**: 検出された具体的なリスク部位。
 
 ### CLI モード (バッチ処理用)
@@ -169,7 +169,7 @@ python main.py ./path/to/images --recursive
 | **HIGH_RISK** | 60-80% | 高リスク。部分的な露出や、明示的な性的タグの検出。スタイルが下着や裸寄りの場合。 |
 | **UNSAFE** | 80-100% | 危険。完全な裸体、乳首・性器の露出、または `nipples` (>=92%) / `pussy` (>=90%) タグの高確信度検出。 |
 
-**注意**: 判定は最大スコアに基づき計算されますが、スタイル（WD14 タグ）によるオーバーライドが適用される場合があります。例えば、NudeNet スコアが低くても、タグで「裸」と判定されれば UNSAFE になる可能性があります。
+**注意**: 判定は最大スコアに基づき計算されますが、スタイル（Waifu Diffusion 14 V3 タグ）によるオーバーライドが適用される場合があります。例えば、NudeNet スコアが低くても、タグで「裸」と判定されれば UNSAFE になる可能性があります。
 
 ## License
 MIT License
