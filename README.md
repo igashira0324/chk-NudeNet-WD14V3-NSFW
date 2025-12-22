@@ -1,10 +1,10 @@
 # chk-NudeNet-local (On-Premise NSFW Checker)
 
-`NudeNet` および `Waifu Diffusion 14 V3 (WD14-Tagger V3, ViT-Large)` を活用した、**完全オンプレミス（ローカル完結）** の NSFW 画像チェックアプリケーションです。  
+`NudeNet` および `Waifu Diffusion 14 V3 (WD14-Tagger V3, EVA02-Large)` を活用した、**完全オンプレミス（ローカル完結）** の NSFW 画像チェックアプリケーションです。  
 外部APIを使用せず、ローカルマシンのリソースのみで高速かつ安全に画像判定を行います。様々な服装やシチュエーション（和服、メイド、制服など）を高精度に識別します。
 
+<!-- *(※ここにスクリーンショットなどを貼ると分かりやすいです)* -->
 <img width="1554" height="886" alt="Image" src="https://github.com/user-attachments/assets/1a6af800-d665-4b58-a6e4-2050fbc29885" />
-*(※ここにスクリーンショットなどを貼ると分かりやすいです)*
 
 ## ✨ 主な特徴 (Features)
 
