@@ -48,47 +48,22 @@ class ReferenceWindow(ctk.CTkToplevel):
 
         ctk.CTkLabel(self.scroll_frame, text="ローカル NudeNet 判定カテゴリ一覧 (改良版)", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(10, 20))
 
-        # Categories Table
-        table_frame = ctk.CTkFrame(self.scroll_frame)
-        table_frame.pack(fill="x", padx=10, pady=10)
-
-        headers = ["カテゴリ名", "判定基準 (ラベル)", "解説 / 判定の仕組み"]
-        h_frame = ctk.CTkFrame(table_frame, fg_color="#333")
-        h_frame.pack(fill="x")
-        ctk.CTkLabel(h_frame, text=headers[0], font=ctk.CTkFont(weight="bold"), width=150).grid(row=0, column=0, padx=5, pady=5)
-        ctk.CTkLabel(h_frame, text=headers[1], font=ctk.CTkFont(weight="bold"), width=300, anchor="w").grid(row=0, column=1, padx=5, pady=5, sticky="w")
-        ctk.CTkLabel(h_frame, text=headers[2], font=ctk.CTkFont(weight="bold"), width=350, anchor="w").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-
-        ref_info = [
-            ("胸 (BREAST)", "BREAST_EXPOSED", "女性の露出した乳部。"),
-            ("性器 (GENITALIA)", "男女すべての隠部露出", "局部、陰毛、挿入等の直接的な露出。"),
-            ("肛門 (ANUS)", "ANUS_EXPOSED", "肛門部分の直接的な露出。"),
-            ("お屁股 (BUTTOCKS)", "BUTTOCKS_EXPOSED", "お屁股の直接的な露出。"),
-            ("腹部/足/脇(Avg)", "BELLY, FEET, ARMPITS", "主要3部位の露出スコアの平均値。"),
-            ("スタイル (WD14)", "10,000種以上のタグ", "高精度AI (WD14 V3) による衣服や状態の特定。"),
-            ("性別,アニメ/実写", "FACE_FEMALE, etc.", "顔認識による性別判定と実写/アニメ分類。")
-        ]
-
-        for name, lbls, logic in ref_info:
-            f = ctk.CTkFrame(table_frame, fg_color="transparent")
-            f.pack(fill="x")
-            ctk.CTkLabel(f, text=name, width=150, font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, padx=5, pady=5)
-            ctk.CTkLabel(f, text=lbls, width=300, anchor="w").grid(row=0, column=1, padx=5, pady=5, sticky="w")
-            ctk.CTkLabel(f, text=logic, width=350, anchor="w", justify="left").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-
         info_text = """
 【判定ロジックの見直し (2025.12 改良版)】
-1. スタイル判定 (最優先):
-   ・Waifu Diffusion 14 V3 (WD14-Tagger V3, ViT-Large) モデルにより、1万以上のタグから「水着」「制服」「下着」等を特定します。
-   ・数値(%)はAIの確信度を表します。
 
-2. NudeNetフォールバック (二次判定):
-   ・衣類タグが見つからない場合、NudeNetの「部位が覆われている(COVERED)」判定をチェックします。
-   ・これにより、タグが検知しにくいポーズでも「水着/下着」として判定可能です。
+1. 判定(スコア)とスタイルの２つを必ずチェックする:
+   ・判定(スコア)は全体の露出度を0-100%で表し、NSFWリスクを評価します。
+   ・スタイルはWaifu Diffusion 14 V3 (WD14-Tagger V3, ViT-Large)モデルにより、1万以上のタグから衣服や状態を特定します。これにより、水着、下着、制服などの判定が可能になります。
 
-3. 部位別解析:
-   ・各部位の数値は 0.0〜1.0 (100%) の露出スコアを表します。
-   ・「着衣(100%)」は、NSFWリスクが極めて低い状態を示します。
+2. その次に胸、性器、肛門、お尻をチェックする:
+   ・胸 (BREAST): BREAST_EXPOSED - 女性の露出した乳部。
+   ・性器 (GENITALIA): 男女すべての隠部露出 - 局部、陰毛、挿入等の直接的な露出。
+   ・肛門 (ANUS): ANUS_EXPOSED - 肛門部分の直接的な露出。
+   ・お屁股 (BUTTOCKS): BUTTOCKS_EXPOSED - お屁股の直接的な露出。
+
+3. 追加の部位解析:
+   ・腹部/足/脇(Avg): BELLY, FEET, ARMPITS - 主要3部位の露出スコアの平均値。
+   ・性別,アニメ/実写: FACE_FEMALE, etc. - 顔認識による性別判定と実写/アニメ分類。
 
  【アニメ/実写判定】
  ・Waifu Diffusion 14 V3 タグ（anime, realistic等）の検出結果を優先し、NudeNetの判定を補正します。
@@ -110,7 +85,7 @@ class ReferenceWindow(ctk.CTkToplevel):
 class NudeNetGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("chk-NudeNet-local (On-Premise NSFW Checker) - 改良版")
+        self.root.title("chk-NudeNet-local (On-Premise NSFW Checker) - 改良牁E)
         self.root.geometry("1550x850")
 
         # Instances
@@ -142,10 +117,10 @@ class NudeNetGUI:
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="NSFW Check", font=ctk.CTkFont(size=22, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
-        self.select_file_btn = ctk.CTkButton(self.sidebar_frame, text="ファイルを個別に選択", command=self._select_files)
+        self.select_file_btn = ctk.CTkButton(self.sidebar_frame, text="ファイルを個別に選抁E, command=self._select_files)
         self.select_file_btn.grid(row=1, column=0, padx=20, pady=10)
 
-        self.select_folder_btn = ctk.CTkButton(self.sidebar_frame, text="フォルダを一括選択", command=self._select_folder)
+        self.select_folder_btn = ctk.CTkButton(self.sidebar_frame, text="フォルダを一括選抁E, command=self._select_folder)
         self.select_folder_btn.grid(row=2, column=0, padx=20, pady=10)
 
         self.recursive_switch = ctk.CTkSwitch(self.sidebar_frame, text="サブフォルダも含める")
@@ -164,7 +139,7 @@ class NudeNetGUI:
         self.img_container.pack(fill="x", padx=5, pady=2)
         self.img_container.pack_propagate(False)
 
-        self.preview_img_label = ctk.CTkLabel(self.img_container, text="画像を選択", text_color="#7f8c8d", font=ctk.CTkFont(size=11))
+        self.preview_img_label = ctk.CTkLabel(self.img_container, text="画像を選抁E, text_color="#7f8c8d", font=ctk.CTkFont(size=11))
         self.preview_img_label.place(relx=0.5, rely=0.5, anchor="center")
         
         # Caption Detail Area
@@ -192,7 +167,7 @@ class NudeNetGUI:
         self.top_ctrl = ctk.CTkFrame(self.main_content, height=50, fg_color="transparent")
         self.top_ctrl.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
         
-        self.start_btn = ctk.CTkButton(self.top_ctrl, text="▶ スキャンを開始", font=ctk.CTkFont(size=15, weight="bold"), 
+        self.start_btn = ctk.CTkButton(self.top_ctrl, text="▶ スキャンを開姁E, font=ctk.CTkFont(size=15, weight="bold"), 
                                       fg_color="#27ae60", hover_color="#2ecc71", command=self._start_analysis)
         self.start_btn.pack(side=tk.LEFT, padx=5)
 
@@ -210,7 +185,7 @@ class NudeNetGUI:
         self.status_box = ctk.CTkFrame(self.top_ctrl, corner_radius=5, fg_color="#34495e")
         self.status_box.pack(side=tk.RIGHT, padx=(10, 5))
         
-        self.status_label = ctk.CTkLabel(self.status_box, text="ステータス: 待機中", font=ctk.CTkFont(weight="bold"), text_color="white")
+        self.status_label = ctk.CTkLabel(self.status_box, text="スチE�Eタス: 征E��中", font=ctk.CTkFont(weight="bold"), text_color="white")
         self.status_label.pack(side=tk.RIGHT, padx=10, pady=2)
 
 
@@ -269,7 +244,7 @@ class NudeNetGUI:
         # Columns
         # FullPath and AllTags are HIDDEN
         cols = ["Filename", "Status", "ReportStyle", "BREAST", "GENITALIA", "ANUS", "BUTTOCKS", "OTHER_REGIONS", "STYLE", "Details", "FullPath", "AllTags"]
-        display_names = ["ファイル名", "判定(スコア)", "スタイル", "胸", "性器", "肛門", "お尻", "腹部/足/脇(Avg)", "性別,アニメ/実写", "詳細ラベル"]
+        display_names = ["ファイル吁E, "判宁Eスコア)", "スタイル", "胸", "性器", "肛門", "お尻", "腹部/足/脁EAvg)", "性別,アニメ/実�E", "詳細ラベル"]
         
         self.tree = ttk.Treeview(self.table_frame, columns=cols, show='headings', selectmode="extended")
 
@@ -306,10 +281,10 @@ class NudeNetGUI:
         self.bottom_ctrl.grid(row=3, column=0, sticky="ew", padx=10, pady=(0, 5))
 
         # Buttons in bottom-right
-        self.export_btn = ctk.CTkButton(self.bottom_ctrl, text="結果をエクスポート", width=120, fg_color="#2c3e50", command=self._export_results)
+        self.export_btn = ctk.CTkButton(self.bottom_ctrl, text="結果をエクスポ�EチE, width=120, fg_color="#2c3e50", command=self._export_results)
         self.export_btn.pack(side=tk.RIGHT, padx=5)
 
-        self.ref_btn = ctk.CTkButton(self.bottom_ctrl, text="カテゴリ基準", width=100, fg_color="#34495e", command=self._show_reference)
+        self.ref_btn = ctk.CTkButton(self.bottom_ctrl, text="カチE��リ基溁E, width=100, fg_color="#34495e", command=self._show_reference)
         self.ref_btn.pack(side=tk.RIGHT, padx=5)
 
         # Bindings
@@ -318,7 +293,7 @@ class NudeNetGUI:
 
         # Context Menu for deletion
         self.context_menu = tk.Menu(self.root, tearoff=0, bg="#333", fg="white", activebackground="#3498db")
-        self.context_menu.add_command(label="選択した項目を削除", command=self._delete_selected)
+        self.context_menu.add_command(label="選択した頁E��を削除", command=self._delete_selected)
         self.tree.bind("<Button-3>", self._show_context_menu)
 
         # Tags for Level-based coloring (Row-based fallback)
@@ -375,11 +350,11 @@ class NudeNetGUI:
         for item in selected:
             self.tree.delete(item)
         self.results = [r for r in self.results if r['id'] not in selected]
-        self._update_status(f"削除完了: {len(selected)} 件", "info")
+        self._update_status(f"削除完亁E {len(selected)} 件", "info")
 
     def _select_files(self):
         """Select files with Japanese path support"""
-        files = filedialog.askopenfilenames(title="画像を選択", filetypes=[("画像ファイル", "*.jpg *.jpeg *.png *.gif *.webp *.bmp")])
+        files = filedialog.askopenfilenames(title="画像を選抁E, filetypes=[("画像ファイル", "*.jpg *.jpeg *.png *.gif *.webp *.bmp")])
         if files:
             for f in files:
                 try:
@@ -388,11 +363,11 @@ class NudeNetGUI:
                     self.tree.insert("", tk.END, values=(f_path.name, "-", "-", "-", "-", "-", "-", "-", "-", "-", str(resolved_path)))
                 except Exception as e:
                     self.tree.insert("", tk.END, values=(Path(f).name, "-", "-", "-", "-", "-", "-", "-", "-", "-", str(f)))
-            self._update_status(f"準備完了: {len(self.tree.get_children())} 枚", "info")
+            self._update_status(f"準備完亁E {len(self.tree.get_children())} 极E, "info")
 
     def _select_folder(self):
         """Select folder with Japanese path support"""
-        folder = filedialog.askdirectory(title="フォルダを選択")
+        folder = filedialog.askdirectory(title="フォルダを選抁E)
         if folder:
             try:
                 folder_path = Path(folder)
@@ -408,21 +383,21 @@ class NudeNetGUI:
                 images = self.file_handler.collect_images(Path(folder), self.recursive_switch.get())
                 for f in images:
                     self.tree.insert("", tk.END, values=(f.name, "-", "-", "-", "-", "-", "-", "-", "-", "-", str(f)))
-            self._update_status(f"準備完了: {len(self.tree.get_children())} 枚", "info")
+            self._update_status(f"準備完亁E {len(self.tree.get_children())} 极E, "info")
 
     def _clear_list(self):
         if self.is_running: return
         items = self.tree.get_children()
         if not items:
-            messagebox.showwarning("警告", "リストが空です。")
+            messagebox.showwarning("警呁E, "リストが空です、E)
             return
-        if not messagebox.askyesno("確認", "リストのすべての項目をクリアしますか？"):
+        if not messagebox.askyesno("確誁E, "リスト�Eすべての頁E��をクリアしますか�E�E):
             return
         for item in items: self.tree.delete(item)
         self.results = []
         self.progress_bar.set(0)
         self._clear_preview()
-        self._update_status("ステータス: 待機中", "idle")
+        self._update_status("スチE�Eタス: 征E��中", "idle")
 
     def _deselect_all(self):
         self.tree.selection_remove(self.tree.selection())
@@ -434,7 +409,7 @@ class NudeNetGUI:
             self._deselect_all()
 
     def _clear_preview(self):
-        self.preview_img_label.configure(image=None, text="画像を選択して下さい")
+        self.preview_img_label.configure(image=None, text="画像を選択して下さぁE)
         self.caption_box.configure(state="normal")
         self.caption_box.delete("1.0", tk.END)
         self.caption_box.configure(state="disabled")
@@ -475,7 +450,7 @@ class NudeNetGUI:
         # if sex_style != "-":
         #    summary_top += f"{sex_style}\n"
         # Removed as per user request, starting directly with Details
-        summary_top = "【詳細カテゴリ】\n"
+        summary_top = "【詳細カチE��リ】\n"
         
         self.caption_box.insert("end", summary_top)
 
@@ -498,12 +473,12 @@ class NudeNetGUI:
                 elif "BUTTOCKS" in label_part: jp_label = "お尻"
                 elif "BELLY" in label_part: jp_label = "腹部"
                 elif "FEET" in label_part: jp_label = "足"
-                elif "ARMPITS" in label_part: jp_label = "脇"
+                elif "ARMPITS" in label_part: jp_label = "脁E
                 
                 # Icon Logic
-                if score >= 0.8: return "● ", "red", f"{jp_label}({score_part}%)"
-                if score >= 0.4: return "● ", "yellow", f"{jp_label}({score_part}%)"
-                return "● ", "green", f"{jp_label}({score_part}%)"
+                if score >= 0.8: return "◁E", "red", f"{jp_label}({score_part}%)"
+                if score >= 0.4: return "◁E", "yellow", f"{jp_label}({score_part}%)"
+                return "◁E", "green", f"{jp_label}({score_part}%)"
             except: 
                 return None, None, text_line
 
@@ -561,7 +536,7 @@ class NudeNetGUI:
             # File info
             file_size_mb = path.stat().st_size / (1024 * 1024)
             # Display ORIGINAL dimensions
-            info_text = f"プレビュー（{original_size[0]}x{original_size[1]}）：{file_size_mb:.1f}MB"
+            info_text = f"プレビュー�E�Eoriginal_size[0]}x{original_size[1]}�E�：{file_size_mb:.1f}MB"
             
             self.preview_label.configure(text=info_text)
             self.preview_img_label.configure(image=ctk_img, text="")
@@ -570,7 +545,7 @@ class NudeNetGUI:
         except Exception as e:
             print(f"Preview error: {e}")
             self._clear_preview()
-            self.preview_img_label.configure(text="プレビュー失敗")
+            self.preview_img_label.configure(text="プレビュー失敁E)
 
     def _update_resource_usage(self):
         """Update CPU/GPU usage metrics periodically"""
@@ -611,13 +586,13 @@ class NudeNetGUI:
         if self.is_running or not self.client: return
         items = self.tree.get_children()
         if not items:
-            messagebox.showerror("エラー", "読み込まれた画像がありません。")
+            messagebox.showerror("エラー", "読み込まれた画像がありません、E)
             return
 
         self.is_running = True
         self.start_btn.configure(state="disabled")
         self.stop_btn.configure(state="normal")
-        self._update_status("ステータス: スキャン中...", "running")
+        self._update_status("スチE�Eタス: スキャン中...", "running")
         
         threading.Thread(target=self._worker, daemon=True).start()
         self.root.after(100, self._process_queue)
@@ -625,7 +600,7 @@ class NudeNetGUI:
     def _stop_analysis(self):
         if not self.is_running: return
         self.is_running = False
-        self._update_status("ステータス: 停止中...", "error")
+        self._update_status("スチE�Eタス: 停止中...", "error")
         
         # Re-enable start button
         self.start_btn.configure(state="normal")
@@ -664,7 +639,7 @@ class NudeNetGUI:
                 if msg_type == 'done':
                     self.is_running = False
                     self._restore_ui_state()
-                    self.status_label.configure(text="ステータス: 完了")
+                    self.status_label.configure(text="スチE�Eタス: 完亁E)
                     return
 
                 total = len(self.tree.get_children())
@@ -705,7 +680,7 @@ class NudeNetGUI:
         else:
             self.is_running = False
             self._restore_ui_state()
-            self._update_status("ステータス: 完了", "done")
+            self._update_status("スチE�Eタス: 完亁E, "done")
 
     def _export_results(self):
         if not self.results: return
@@ -729,7 +704,7 @@ class NudeNetGUI:
             else:
                 with open(p, 'w', newline='', encoding='utf-8-sig') as f:
                     writer = csv.writer(f)
-                    writer.writerow(["ファイル名", "総合スコア", "判定", "胸", "性器", "肛門", "お屁股", "腹部/足/脇", "スタイル", "詳細", "パス"])
+                    writer.writerow(["ファイル吁E, "総合スコア", "判宁E, "胸", "性器", "肛門", "お屁股", "腹部/足/脁E, "スタイル", "詳細", "パス"])
                     for r in self.results:
                         if r['verdict'] == 'ERROR':
                             writer.writerow([r['filename'], 0, "ERROR", "", "", "", "", "", "", "", r['path']])
@@ -741,8 +716,8 @@ class NudeNetGUI:
                             c['FEMALE_BREAST'].display_score, c['GENITALIA'].display_score, c['ANUS'].display_score, c['BUTTOCKS'].display_score,
                             c['OTHER_REGIONS'].display_score, sr.primary_style, sr.labels_summary, r['path']
                         ])
-            messagebox.showinfo("成功", f"エクスポート完了: {p.name}")
-        except Exception as e: messagebox.showerror("エラー", f"失敗: {e}")
+            messagebox.showinfo("成功", f"エクスポ�Eト完亁E {p.name}")
+        except Exception as e: messagebox.showerror("エラー", f"失敁E {e}")
 
 def launch_gui():
     root = ctk.CTk()
