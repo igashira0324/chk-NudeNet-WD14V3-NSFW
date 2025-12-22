@@ -61,8 +61,8 @@ VERDICT_ICONS = {
 # Model URLs
 NUDENET_MODEL_URL = "https://github.com/notAI-tech/NudeNet/releases/download/v3.0/640m.onnx"
 ANIME_MODEL_URL = "https://huggingface.co/deepghs/anime_real_cls/resolve/main/mobilenetv3_v1.4_dist/model.onnx?download=true"
-CLOTHING_TAGGER_URL = "https://huggingface.co/SmilingWolf/wd-vit-large-tagger-v3/resolve/main/model.onnx?download=true"
-CLOTHING_TAGS_URL = "https://huggingface.co/SmilingWolf/wd-vit-large-tagger-v3/resolve/main/selected_tags.csv?download=true"
+CLOTHING_TAGGER_URL = "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/main/model.onnx?download=true"
+CLOTHING_TAGS_URL = "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/main/selected_tags.csv?download=true"
 
 # Swimsuit/Clothing tags for primary style detection
 STYLE_TAG_MAP = {
