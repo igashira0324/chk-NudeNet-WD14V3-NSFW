@@ -1,0 +1,11 @@
+<svg viewBox="0 0 1466 825" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<clipPath id="c0_1"><path d="M-.2 825.3V-.2H1467V825.3Z"/></clipPath>
+<clipPath id="c1_1"><path d="M-.2 812.8V12.2H1467V812.8Z"/></clipPath>
+<style>
+.g0_1{fill:#FFF;}
+</style>
+</defs>
+<path clip-path="url(#c0_1)" fill-rule="evenodd" d="M0 825H1466.7V0H0V825Z" class="g0_1"/>
+<image clip-path="url(#c1_1)" preserveAspectRatio="none" x="0" y="12" width="1467" height="800" href="img/1.jpg"/>
+</svg>
